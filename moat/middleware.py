@@ -17,7 +17,7 @@ import logging
 import re
 
 from django.conf import settings
-from django.http import HttpResponse, iri_to_uri, get_host
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import resolve
 
@@ -25,12 +25,8 @@ from django.core.urlresolvers import resolve
 LOG = logging.getLogger(__name__)
 
 
-class HttpResponseTemporaryRedirect(HttpResponse):
+class HttpResponseTemporaryRedirect(HttpResponseRedirect):
     status_code = 307
-
-    def __init__(self, redirect_to):
-        super(HttpResponse, self).__init__()
-        self['Location'] = iri_to_uri(redirect_to)
 
 
 class MoatMiddleware(object):
@@ -104,7 +100,7 @@ class MoatMiddleware(object):
         return self._http_auth_helper(request)
 
     def _redirect(self, request):
-        newurl = "https://%s%s" % (get_host(request), request.get_full_path())
+        newurl = "https://%s%s" % (request.get_host(), request.get_full_path())
         if settings.DEBUG and request.method == 'POST':
             raise RuntimeError(
                 "Django can't perform a SSL redirect while maintaining POST "
